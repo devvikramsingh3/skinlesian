@@ -1,0 +1,411 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skin Lesion Classifier</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Using Google Maps without API key for development purposes only -->
+  <script src="https://maps.googleapis.com/maps/api/js?libraries=places" defer></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-microscope"></i> Skin Lesion Classifier</h1>
+      <p class="subtitle">AI-powered dermatological analysis tool</p>
+    </header>
+    
+    <div class="card info-card">
+      <h2><i class="fas fa-info-circle"></i> About This Tool</h2>
+      <p>This tool uses machine learning to classify skin lesions into 7 different categories:</p>
+      <ul class="lesion-types">
+        <li><span class="tag">akiec</span> Actinic Keratoses and Intraepithelial Carcinoma</li>
+        <li><span class="tag">bcc</span> Basal Cell Carcinoma</li>
+        <li><span class="tag">bkl</span> Benign Keratosis-like Lesions</li>
+        <li><span class="tag">df</span> Dermatofibroma</li>
+        <li><span class="tag">mel</span> Melanoma</li>
+        <li><span class="tag">nv</span> Melanocytic Nevi</li>
+        <li><span class="tag">vasc</span> Vascular Lesions</li>
+      </ul>
+      <p class="disclaimer">Note: This is a demonstration tool and should not replace professional medical advice.</p>
+    </div>
+    
+    <div class="card upload-card">
+      <h2><i class="fas fa-upload"></i> Upload Image</h2>
+      <p>Upload a dermatoscopic image to get predicted lesion type and visualization.</p>
+      <form action="/predict" method="post" enctype="multipart/form-data" class="upload-form">
+        <div class="file-input-container">
+          <input type="file" name="image" id="image-input" accept="image/*" required>
+          <label for="image-input" class="file-label">
+            <i class="fas fa-file-image"></i> Choose Image
+          </label>
+          <span id="file-name">No file selected</span>
+        </div>
+        <button type="submit" class="analyze-btn"><i class="fas fa-search"></i> Analyze Image</button>
+      </form>
+    </div>
+    
+    <footer>
+      <p>&copy; 2023 Skin Lesion Classifier | <a href="https://github.com/" target="_blank">GitHub</a></p>
+    </footer>
+  </div>
+  
+  <!-- Chatbot Toggle Button -->
+  <div class="chatbot-toggle" id="chatbot-toggle">
+    <i class="fas fa-comment-medical"></i>
+  </div>
+  
+  <!-- Chatbot Container -->
+  <div class="chatbot-container" id="chatbot-container">
+    <div class="chatbot-header">
+      <div><i class="fas fa-robot"></i> Medical Assistant</div>
+      <div class="chatbot-close" id="chatbot-close"><i class="fas fa-times"></i></div>
+    </div>
+    <div class="chatbot-messages" id="chatbot-messages">
+      <div class="chat-message bot-message">
+        <div class="message-content">Hello! I'm your medical assistant. I can provide information about skin lesions and help you find specialists. How can I help you today?</div>
+      </div>
+    </div>
+    <div class="chatbot-input">
+      <input type="text" id="chatbot-input-field" placeholder="Type your message...">
+      <button id="chatbot-send-btn"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+  
+  <script>
+    // Display selected filename
+    document.getElementById('image-input').addEventListener('change', function(e) {
+      const fileName = e.target.files[0] ? e.target.files[0].name : 'No file selected';
+      document.getElementById('file-name').textContent = fileName;
+    });
+    
+    // Chatbot functionality
+    const chatbotToggle = document.getElementById('chatbot-toggle');
+    const chatbotContainer = document.getElementById('chatbot-container');
+    const chatbotClose = document.getElementById('chatbot-close');
+    const chatbotMessages = document.getElementById('chatbot-messages');
+    const chatbotInput = document.getElementById('chatbot-input-field');
+    const chatbotSendBtn = document.getElementById('chatbot-send-btn');
+    
+    // Toggle chatbot visibility
+    chatbotToggle.addEventListener('click', function() {
+      chatbotContainer.classList.add('active');
+    });
+    
+    chatbotClose.addEventListener('click', function() {
+      chatbotContainer.classList.remove('active');
+    });
+    
+    // Send message function
+    function sendMessage() {
+      const message = chatbotInput.value.trim();
+      if (message === '') return;
+      
+      // Add user message to chat
+      addMessage(message, 'user');
+      chatbotInput.value = '';
+      
+      // Send to backend API
+      fetch('/api/chatbot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: message })
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Add bot response to chat
+        addMessage(data.response, 'bot');
+        
+        // Check if response contains location request
+        if (data.response.includes('Please share your location')) {
+          setTimeout(() => {
+            addMessage('You can type a city name to find specialists nearby.', 'bot');
+          }, 500);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        addMessage('Sorry, there was an error processing your request.', 'bot');
+      });
+    }
+    
+    // Add message to chat
+    function addMessage(message, sender) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `chat-message ${sender}-message`;
+      
+      const messageContent = document.createElement('div');
+      messageContent.className = 'message-content';
+      
+      // Convert markdown-style formatting
+      message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
+      messageContent.innerHTML = message;
+      messageDiv.appendChild(messageContent);
+      chatbotMessages.appendChild(messageDiv);
+      
+      // Scroll to bottom
+      chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }
+    
+    // Send message on button click
+    chatbotSendBtn.addEventListener('click', sendMessage);
+    
+    // Send message on Enter key
+    chatbotInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+    
+    // Initialize Google Map
+    let map;
+    let markers = [];
+    
+    // Check if Google Maps API is loaded
+    function isGoogleMapsLoaded() {
+      return window.google && window.google.maps;
+    }
+    
+    function initMap(doctors, location) {
+      console.log('initMap called with doctors:', doctors);
+      
+      // Check if Google Maps API is loaded
+      if (!isGoogleMapsLoaded()) {
+        console.error('Google Maps API is not loaded');
+        addMessage('Unable to load map. Please check your internet connection.', 'bot');
+        return;
+      }
+      
+      // Create map container if it doesn't exist
+      let mapContainer = document.getElementById('map-container');
+      if (!mapContainer) {
+        mapContainer = document.createElement('div');
+        mapContainer.id = 'map-container';
+        mapContainer.className = 'map-container';
+        mapContainer.style.height = '400px'; // Ensure the map has a height
+        chatbotMessages.appendChild(mapContainer);
+      }
+      
+      // Clear previous markers
+      markers.forEach(marker => marker.setMap(null));
+      markers = [];
+      
+      // Initialize map centered on the first doctor or provided location
+      const center = doctors && doctors.length > 0 ? 
+        { lat: doctors[0].latitude || 40.7128, lng: doctors[0].longitude || -74.0060 } : 
+        { lat: 40.7128, lng: -74.0060 }; // Default to NYC
+      
+      map = new google.maps.Map(mapContainer, {
+        zoom: 12,
+        center: center,
+        styles: [
+          {
+            "featureType": "all",
+            "elementType": "geometry",
+            "stylers": [{"color": "#f5f5f5"}]
+          },
+          {
+            "featureType": "water",
+            "elementType": "geometry",
+            "stylers": [{"color": "#c9c9c9"}]
+          },
+          {
+            "featureType": "poi.park",
+            "elementType": "geometry",
+            "stylers": [{"color": "#e5e5e5"}]
+          }
+        ]
+      });
+      
+      // Add markers for each doctor
+      doctors.forEach((doctor, index) => {
+        if (doctor.latitude && doctor.longitude) {
+          const marker = new google.maps.Marker({
+            position: { lat: doctor.latitude, lng: doctor.longitude },
+            map: map,
+            title: doctor.name,
+            animation: google.maps.Animation.DROP,
+            label: (index + 1).toString()
+          });
+          
+          // Info window for each marker
+          const infoWindow = new google.maps.InfoWindow({
+            content: `
+              <div class="map-info-window">
+                <h3>${doctor.name}</h3>
+                <p>${doctor.specialty}</p>
+                <p>${doctor.address}</p>
+                <p>${doctor.phone}</p>
+                <div class="rating">
+                  <span>★</span> ${doctor.rating}
+                </div>
+              </div>
+            `
+          });
+          
+          marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+          });
+          
+          markers.push(marker);
+        }
+      });
+      
+      // Fit bounds to show all markers
+      if (markers.length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        markers.forEach(marker => bounds.extend(marker.getPosition()));
+        map.fitBounds(bounds);
+        
+        // Don't zoom in too far
+        const listener = google.maps.event.addListener(map, 'idle', function() {
+          if (map.getZoom() > 16) map.setZoom(16);
+          google.maps.event.removeListener(listener);
+        });
+      }
+      
+      // Scroll to map
+      mapContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Function to find doctors
+    function findDoctors(location, lesionType) {
+      // Show loading message
+      addMessage('Searching for specialists near you...', 'bot');
+      
+      fetch('/api/find-doctors', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ location: location, lesion_type: lesionType })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.doctors && data.doctors.length > 0) {
+          // Ensure coordinates are numbers, not strings
+          data.doctors.forEach((doctor, index) => {
+            if (doctor.latitude && doctor.longitude) {
+              doctor.latitude = parseFloat(doctor.latitude);
+              doctor.longitude = parseFloat(doctor.longitude);
+            } else {
+              // Generate some random coordinates near NYC for demo
+              doctor.latitude = 40.7128 + (Math.random() - 0.5) * 0.1;
+              doctor.longitude = -74.0060 + (Math.random() - 0.5) * 0.1;
+            }
+          });
+          
+          console.log('Doctors data received:', data.doctors);
+          
+          // Create doctor list HTML
+          let doctorsHtml = `<div class="doctor-list">`;
+          
+          data.doctors.forEach((doctor, index) => {
+            doctorsHtml += `
+              <div class="doctor-card" data-index="${index}">
+                <div class="doctor-number">${index + 1}</div>
+                <div class="doctor-info">
+                  <div class="doctor-name">${doctor.name}</div>
+                  <div class="doctor-specialty">${doctor.specialty}</div>
+                  <div class="doctor-address"><i class="fas fa-map-marker-alt"></i> ${doctor.address}</div>
+                  <div class="doctor-phone"><i class="fas fa-phone"></i> ${doctor.phone}</div>
+                  <div class="doctor-rating">
+                    <i class="fas fa-star"></i>
+                    <span>${doctor.rating}</span>
+                  </div>
+                </div>
+                <div class="doctor-actions">
+                  <button class="view-on-map-btn" onclick="highlightMarker(${index})"><i class="fas fa-map-pin"></i> View on Map</button>
+                </div>
+              </div>
+            `;
+          });
+          
+          doctorsHtml += `</div>`;
+          addMessage(doctorsHtml, 'bot');
+          
+          // Initialize map with doctors
+          console.log('Calling initMap with doctors:', data.doctors);
+          setTimeout(() => {
+            initMap(data.doctors, location);
+          }, 500); // Add a small delay to ensure DOM is ready
+        } else {
+          addMessage('No doctors found in that location.', 'bot');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        addMessage('Sorry, there was an error finding doctors.', 'bot');
+      });
+    }
+    
+    // Listen for location messages
+    chatbotInput.addEventListener('input', function() {
+      const message = chatbotInput.value.toLowerCase();
+      if (message.includes('find') && message.includes('doctor')) {
+        // Extract location from message (simple implementation)
+        const locationMatch = message.match(/in ([a-zA-Z\s]+)/);
+        if (locationMatch && locationMatch[1]) {
+          const location = locationMatch[1].trim();
+          chatbotInput.dataset.pendingLocation = location;
+        }
+      }
+    });
+    
+    // Function to highlight a marker on the map
+    function highlightMarker(index) {
+      if (markers[index]) {
+        // Pan to the marker
+        map.panTo(markers[index].getPosition());
+        map.setZoom(15);
+        
+        // Bounce animation
+        markers.forEach(m => m.setAnimation(null));
+        markers[index].setAnimation(google.maps.Animation.BOUNCE);
+        
+        // Stop bouncing after 2 seconds
+        setTimeout(() => {
+          markers[index].setAnimation(null);
+        }, 2000);
+        
+        // Open info window
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div class="map-info-window">
+              <h3>${markers[index].getTitle()}</h3>
+              <p>Click for more details</p>
+            </div>
+          `
+        });
+        
+        infoWindow.open(map, markers[index]);
+        
+        // Highlight corresponding card in the list
+        const doctorCards = document.querySelectorAll('.doctor-card');
+        doctorCards.forEach(card => card.classList.remove('highlighted'));
+        
+        const card = document.querySelector(`.doctor-card[data-index="${index}"]`);
+        if (card) {
+          card.classList.add('highlighted');
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
+    
+    // Add event listeners to doctor cards for highlighting on hover
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.doctor-card')) {
+        const card = e.target.closest('.doctor-card');
+        const index = parseInt(card.dataset.index);
+        if (!isNaN(index)) {
+          highlightMarker(index);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Core ML
+scikit-learn==1.2.2
+numpy==1.24.3
+pandas==2.0.1
+
+# Image processing
+Pillow==9.5.0
+matplotlib==3.7.1
+opencv-python==4.7.0.72
+
+# Web backend
+flask==2.3.2
+flask-cors==3.0.10
+
+# Utils
+tqdm==4.65.0
