@@ -10,6 +10,11 @@ An AI-powered web application for classifying skin lesions into different catego
 - Modern, responsive UI for desktop and mobile devices
 - Interactive chatbot for additional information
 - Find nearby specialists based on diagnosis
+  
+- <img width="1903" height="956" alt="Screenshot 2025-09-13 233551" src="https://github.com/user-attachments/assets/d3fb8569-8171-4f09-8ba3-30468b1bcbd9" />
+<img width="1899" height="951" alt="Screenshot 2025-09-13 233456" src="https://github.com/user-attachments/assets/2c73a784-de14-4b34-a809-32b69ccf1cf5" />
+
+
 
 ## Application Preview
 
