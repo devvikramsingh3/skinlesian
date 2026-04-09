@@ -20,5 +20,4 @@
     "PYTHONUNBUFFERED": "1",
     "SECRET_KEY": "your-secure-random-secret-key-change-this-in-production-123456789"
   }
-  }
 }
