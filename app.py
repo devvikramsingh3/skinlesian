@@ -10,14 +10,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
 
 # Import the Flask app
 try:
-    from app import app
+    from app import app as flask_app
     print("Flask app imported successfully")
+    # Expose as 'app' for Vercel
+    app = flask_app
 except Exception as e:
     print(f"Error importing Flask app: {e}")
     raise
-
-# For Vercel serverless functions - expose the Flask app as WSGI application
-application = app
 
 if __name__ == '__main__':
     app.run()
