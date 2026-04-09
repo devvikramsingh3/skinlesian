@@ -1,14 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "app.py",
-      "use": "@vercel/python",
-      "config": {
-        "pythonVersion": "3.11"
-      }
+  "functions": {
+    "app.py": {
+      "runtime": "python3.11"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/(.*)",
@@ -16,8 +12,6 @@
     }
   ],
   "env": {
-    "FLASK_ENV": "production",
-    "PYTHONUNBUFFERED": "1",
-    "SECRET_KEY": "your-secure-random-secret-key-change-this-in-production-123456789"
+    "PYTHONUNBUFFERED": "1"
   }
 }

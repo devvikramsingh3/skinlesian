@@ -1,56 +1,66 @@
 #!/usr/bin/env python3
 """
-Ultra-minimal Vercel test app
+Basic Python function for Vercel (no Flask)
 """
-from flask import Flask
 
-# Create a minimal Flask app
-app = Flask(__name__)
+def handler(event, context):
+    """Vercel serverless function handler"""
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "text/html"
+        },
+        "body": """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Skin Lesion Classifier - Python Test</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+                .container { max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; backdrop-filter: blur(10px); }
+                .success { color: #4CAF50; font-size: 28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+                .status { background: rgba(76, 175, 80, 0.2); padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #4CAF50; }
+                .features { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin: 20px 0; }
+                .feature { margin: 10px 0; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 5px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1 class="success">🎉 SUCCESS: Vercel Python Function Working!</h1>
+                <div class="status">
+                    <p><strong>✅ Status:</strong> Python serverless function executing successfully</p>
+                    <p><strong>✅ Runtime:</strong> Python 3.11 on Vercel</p>
+                    <p><strong>✅ Response:</strong> HTML generated dynamically</p>
+                    <p><strong>📅 Date:</strong> April 10, 2026</p>
+                </div>
 
-@app.route('/')
-def home():
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Skin Lesion Classifier - Vercel Test</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 40px; background: #f0f0f0; }
-            .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
-            .success { color: green; font-size: 24px; }
-            .status { background: #e8f5e8; padding: 10px; border-radius: 5px; margin: 10px 0; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1 class="success">✅ Vercel Deployment Successful!</h1>
-            <div class="status">
-                <p><strong>Status:</strong> Flask app working on Vercel serverless</p>
-                <p><strong>Python Version:</strong> 3.11</p>
-                <p><strong>Framework:</strong> Flask</p>
+                <h2>🚀 Next Steps for Full Application:</h2>
+                <div class="features">
+                    <div class="feature">🔐 <strong>User Authentication:</strong> Login/Register system with Flask-Login</div>
+                    <div class="feature">📊 <strong>AI Analysis:</strong> Skin lesion classification with TensorFlow</div>
+                    <div class="feature">📋 <strong>Patient History:</strong> Database tracking with SQLAlchemy</div>
+                    <div class="feature">🎨 <strong>Modern UI:</strong> Responsive design with CSS</div>
+                    <div class="feature">📱 <strong>Mobile Ready:</strong> Cross-device compatibility</div>
+                    <div class="feature">☁️ <strong>Cloud Database:</strong> PostgreSQL for persistent storage</div>
+                </div>
+
+                <hr style="border: none; height: 1px; background: rgba(255,255,255,0.3);">
+                <p style="text-align: center; font-style: italic;">
+                    Skin Lesion Classifier - Full application integration in progress...
+                </p>
             </div>
-            <p>This confirms that Vercel can run Python Flask applications successfully.</p>
-            <hr>
-            <h3>Next Steps for Full App:</h3>
-            <ul>
-                <li>🔐 Add user authentication system</li>
-                <li>📊 Integrate skin lesion analysis model</li>
-                <li>📋 Add patient history database</li>
-                <li>🎨 Implement modern UI with CSS</li>
-                <li>📱 Add responsive design</li>
-            </ul>
-            <p><a href="/test">Test JSON API</a></p>
-        </div>
-    </body>
-    </html>
-    """
+        </body>
+        </html>
+        """
+    }
 
-@app.route('/test')
-def test():
-    return {"message": "Vercel Python function working!", "status": "success", "timestamp": "2026-04-10"}
-
+# For local testing
 if __name__ == '__main__':
-    app.run()
+    # Simulate Vercel event
+    result = handler({}, {})
+    print("Status Code:", result["statusCode"])
+    print("Response length:", len(result["body"]))
+    print("First 200 chars:", result["body"][:200])
 
 if __name__ == '__main__':
     app.run()
