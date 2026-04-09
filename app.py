@@ -1,37 +1,48 @@
 #!/usr/bin/env python3
 """
-Main entry point for Vercel deployment
+Minimal Vercel test app
 """
-import sys
-import os
+from flask import Flask, render_template_string
 
-# Add backend directory to Python path
-backend_path = os.path.join(os.path.dirname(__file__), 'backend')
-sys.path.insert(0, backend_path)
+# Create a minimal Flask app
+app = Flask(__name__)
 
-# Simple test first
-print("Starting Vercel deployment...")
-print(f"Python path: {sys.path}")
-print(f"Current directory: {os.getcwd()}")
-print(f"Backend path: {backend_path}")
+@app.route('/')
+def home():
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Skin Lesion Classifier - Vercel Test</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .container { max-width: 800px; margin: 0 auto; }
+            .success { color: green; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="success">✅ Vercel Deployment Successful!</h1>
+            <p>This is a minimal test version of the Skin Lesion Classifier.</p>
+            <p><strong>Status:</strong> Basic Flask app working on Vercel</p>
+            <p><strong>Next steps:</strong> Full app integration pending</p>
+            <hr>
+            <h3>Available Features (Coming Soon):</h3>
+            <ul>
+                <li>🔐 User Authentication (Login/Register)</li>
+                <li>📊 Skin Lesion Analysis</li>
+                <li>📋 Patient History Tracking</li>
+                <li>🎨 Modern UI with CSS</li>
+            </ul>
+        </div>
+    </body>
+    </html>
+    """)
 
-# Import the Flask app directly
-try:
-    from backend.app import app
-    print("Flask app imported successfully from backend.app")
-except Exception as e:
-    print(f"Error importing Flask app: {e}")
-    import traceback
-    traceback.print_exc()
-    # Create a minimal fallback app
-    from flask import Flask
-    app = Flask(__name__)
+@app.route('/test')
+def test():
+    return {"message": "Vercel Python function working!", "status": "success"}
 
-    @app.route('/')
-    def home():
-        return "Hello from fallback app! Import failed: " + str(e)
-
-# For Vercel serverless functions
 if __name__ == '__main__':
     app.run()
 
