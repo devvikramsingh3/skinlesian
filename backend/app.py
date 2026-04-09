@@ -17,20 +17,24 @@ from models import db, User, PatientRecord
 # Get the directory where this file is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# For Vercel deployment, adjust paths if running from root
-if os.path.basename(BASE_DIR) == 'backend':
-    # Running from backend directory (local development)
-    pass
+# Check if we're running on Vercel (serverless environment)
+is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('VERCEL_ENV') is not None
+
+if is_vercel:
+    # Running on Vercel - use relative paths
+    template_dir = 'static/templates'
+    static_dir = 'static'
 else:
-    # Running from root directory (Vercel deployment)
-    BASE_DIR = os.path.join(BASE_DIR, 'backend')
+    # Running locally - use absolute paths
+    template_dir = os.path.join(BASE_DIR, 'static', 'templates')
+    static_dir = os.path.join(BASE_DIR, 'static')
 
 MODEL_PATH = os.environ.get("MODEL_PATH", os.path.join(BASE_DIR, "saved_model/model.keras"))
 LABELS_PATH = os.environ.get("LABELS_PATH", os.path.join(BASE_DIR, "labels.json"))
 
-app = Flask(__name__, 
-           template_folder=os.path.join(BASE_DIR, 'static', 'templates'),
-           static_folder=os.path.join(BASE_DIR, 'static'))
+app = Flask(__name__,
+           template_folder=template_dir,
+           static_folder=static_dir)
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
@@ -48,10 +52,14 @@ login_manager.login_message = 'Please log in to access this page.'
 
 # Load model
 try:
+    print(f"Loading model from: {MODEL_PATH}")
+    print(f"Loading labels from: {LABELS_PATH}")
     model = SkinModel(MODEL_PATH, LABELS_PATH)
     print("Model loaded successfully")
 except Exception as e:
     print(f"Model loading error: {e}")
+    import traceback
+    traceback.print_exc()
     model = None
 
 # User loader for Flask-Login
@@ -62,10 +70,13 @@ def load_user(user_id):
 # Create database tables
 with app.app_context():
     try:
+        print("Creating database tables...")
         db.create_all()
         print("Database tables created successfully")
     except Exception as e:
         print(f"Database initialization warning: {e}")
+        import traceback
+        traceback.print_exc()
         # Continue anyway - tables might already exist
 
 # Disease information database
