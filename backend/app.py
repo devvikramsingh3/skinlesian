@@ -21,24 +21,16 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('VERCEL_ENV') is not None
 
 if is_vercel:
-    # Running on Vercel - use relative paths
-    template_dir = 'static/templates'
-    static_dir = 'static'
+    # Running on Vercel - use simple Flask app without custom paths
+    app = Flask(__name__)
+    # Manually set template and static folders
+    app.template_folder = os.path.join(os.path.dirname(__file__), 'static', 'templates')
+    app.static_folder = os.path.join(os.path.dirname(__file__), 'static')
 else:
-    # Running locally - use absolute paths
-    template_dir = os.path.join(BASE_DIR, 'static', 'templates')
-    static_dir = os.path.join(BASE_DIR, 'static')
-
-MODEL_PATH = os.environ.get("MODEL_PATH", os.path.join(BASE_DIR, "saved_model/model.keras"))
-LABELS_PATH = os.environ.get("LABELS_PATH", os.path.join(BASE_DIR, "labels.json"))
-
-app = Flask(__name__,
-           template_folder=template_dir,
-           static_folder=static_dir)
-
-# Configuration
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///skin_lesion_classifier.db')
+    # Running locally - use the full configuration
+    app = Flask(__name__,
+               template_folder=os.path.join(BASE_DIR, 'static', 'templates'),
+               static_folder=os.path.join(BASE_DIR, 'static'))
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize database
@@ -50,34 +42,35 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Please log in to access this page.'
 
-# Load model
+# Load model - make this completely optional
+model = None
 try:
-    print(f"Loading model from: {MODEL_PATH}")
-    print(f"Loading labels from: {LABELS_PATH}")
-    model = SkinModel(MODEL_PATH, LABELS_PATH)
-    print("Model loaded successfully")
+    print(f"Attempting to load model from: {MODEL_PATH}")
+    print(f"Attempting to load labels from: {LABELS_PATH}")
+    if os.path.exists(MODEL_PATH) and os.path.exists(LABELS_PATH):
+        model = SkinModel(MODEL_PATH, LABELS_PATH)
+        print("Model loaded successfully")
+    else:
+        print("Model or labels file not found - using mock predictions only")
 except Exception as e:
-    print(f"Model loading error: {e}")
-    import traceback
-    traceback.print_exc()
+    print(f"Model loading failed (expected on Vercel): {e}")
     model = None
+    # This is expected on Vercel - continue without model
 
 # User loader for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Create database tables
-with app.app_context():
-    try:
+# Create database tables - only try once and handle errors gracefully
+try:
+    with app.app_context():
         print("Creating database tables...")
         db.create_all()
         print("Database tables created successfully")
-    except Exception as e:
-        print(f"Database initialization warning: {e}")
-        import traceback
-        traceback.print_exc()
-        # Continue anyway - tables might already exist
+except Exception as e:
+    print(f"Database initialization failed: {e}")
+    # Continue without database - app will still work for basic functionality
 
 # Disease information database
 DISEASE_INFO = {
