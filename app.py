@@ -54,6 +54,9 @@ def handler(event, context):
         """
     }
 
+# Expose both handler and application names for Vercel compatibility
+application = handler
+
 # For local testing
 if __name__ == '__main__':
     # Simulate Vercel event
@@ -61,6 +64,3 @@ if __name__ == '__main__':
     print("Status Code:", result["statusCode"])
     print("Response length:", len(result["body"]))
     print("First 200 chars:", result["body"][:200])
-
-if __name__ == '__main__':
-    app.run()
