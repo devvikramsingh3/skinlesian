@@ -3,7 +3,13 @@ import json
 import os
 import cv2
 import random
-import tensorflow as tf
+
+try:
+    import tensorflow as tf
+    TF_AVAILABLE = True
+except ImportError:
+    print("WARNING: TensorFlow not available. Using mock predictions.")
+    TF_AVAILABLE = False
 
 class SkinModel:
     def __init__(self, model_path="saved_model/model.keras", labels_path="labels.json"):
@@ -13,13 +19,16 @@ class SkinModel:
         self.target_size = (224, 224)
         
         # Load the actual model
-        try:
-            self.model = tf.keras.models.load_model(model_path)
-            print(f"Model loaded successfully from {model_path}")
-        except Exception as e:
-            print(f"Error loading model: {e}")
-            print("Falling back to mock predictions")
-            self.model = None
+        self.model = None
+        if TF_AVAILABLE:
+            try:
+                self.model = tf.keras.models.load_model(model_path)
+                print(f"Model loaded successfully from {model_path}")
+            except Exception as e:
+                print(f"Error loading model: {e}")
+                print("Falling back to mock predictions")
+        else:
+            print("TensorFlow not available - using mock predictions")
         
         print(f"Model initialized with labels: {self.labels}")
 

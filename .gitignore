@@ -48,4 +48,13 @@ logs/
 
 # OS specific
 .DS_Store
+
+# Vercel
+.vercel/
+.env
+.env.*.local
+
+# Database
+*.db
+skin_lesion_classifier.db
 Thumbs.db

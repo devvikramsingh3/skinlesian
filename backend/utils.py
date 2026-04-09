@@ -2,7 +2,6 @@ import numpy as np
 import cv2, base64
 from io import BytesIO
 from PIL import Image
-import tensorflow as tf
 
 def read_image_from_bytes(file_bytes):
     img = Image.open(BytesIO(file_bytes)).convert("RGB")

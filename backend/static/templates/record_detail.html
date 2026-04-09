@@ -1,0 +1,243 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Record Details - Skin Lesion Classifier</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <h1><i class="fas fa-microscope"></i> Record Details</h1>
+        <div class="header-actions">
+          <span class="user-info">Hello, <strong>{{ current_user.first_name or current_user.username }}</strong></span>
+          <a href="/logout" class="btn logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+      </div>
+    </header>
+    
+    <nav class="breadcrumb">
+      <a href="/"><i class="fas fa-home"></i> Home</a>
+      <span class="separator">/</span>
+      <a href="/patient-history">Patient History</a>
+      <span class="separator">/</span>
+      <span>Record #{{ record.id }}</span>
+    </nav>
+    
+    <div class="record-details-container">
+      <!-- Main Prediction Card -->
+      <div class="card result-card">
+        <h2><i class="fas fa-chart-pie"></i> Classification Results</h2>
+        <div class="top-prediction">
+          <span class="prediction-label">Top Prediction:</span>
+          <span class="prediction-value">{{ record.top_prediction }}</span>
+          {% if disease_info[record.top_prediction] %}
+            <div class="disease-name">{{ disease_info[record.top_prediction]['name'] }}</div>
+          {% endif %}
+        </div>
+        
+        <div class="prediction-chart">
+          <h3>Probability Distribution</h3>
+          <ul class="prediction-bars">
+            {% for p in predictions %}
+              <li>
+                <div class="prediction-label">{{ p.label }}</div>
+                <div class="prediction-bar-container">
+                  <div class="prediction-bar" style="width: {{ p.prob*100 }}%;"></div>
+                  <span class="prediction-percentage">{{ (p.prob*100)|round(1) }}%</span>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Image and Heatmap -->
+      <div class="card heatmap-card">
+        <h2><i class="fas fa-fire"></i> Visualization</h2>
+        <p>The heatmap highlights regions that influenced the model's prediction:</p>
+        <div class="heatmap-container">
+          <img src="data:image/png;base64,{{ record.heatmap_base64 }}" alt="Grad-CAM Heatmap" class="heatmap">
+        </div>
+        <div class="heatmap-legend">
+          <div class="legend-item">
+            <span class="legend-color" style="background: blue;"></span>
+            <span class="legend-label">Less influential</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: red;"></span>
+            <span class="legend-label">More influential</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Disease Information -->
+      {% if disease_info[record.top_prediction] %}
+      <div class="card disease-info-card">
+        <h2><i class="fas fa-info-circle"></i> Disease Information</h2>
+        {% set info = disease_info[record.top_prediction] %}
+        
+        <div class="info-section">
+          <h3>Description</h3>
+          <p>{{ info['description'] }}</p>
+        </div>
+        
+        <div class="info-section">
+          <h3><i class="fas fa-capsules"></i> Treatment Options</h3>
+          <p>{{ info['treatment'] }}</p>
+        </div>
+        
+        <div class="info-section">
+          <h3><i class="fas fa-user-md"></i> Recommended Specialists</h3>
+          <p>{{ info['specialist'] }}</p>
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- Record Metadata -->
+      <div class="card metadata-card">
+        <h2><i class="fas fa-clipboard-list"></i> Record Information</h2>
+        
+        <div class="metadata-grid">
+          <div class="metadata-item">
+            <label>Date of Analysis</label>
+            <span>{{ record.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+          </div>
+          <div class="metadata-item">
+            <label>Confidence Score</label>
+            <span>{{ (record.confidence * 100)|round(1) }}%</span>
+          </div>
+          <div class="metadata-item">
+            <label>Body Part</label>
+            <span>{{ record.body_parts or 'Not specified' }}</span>
+          </div>
+          <div class="metadata-item">
+            <label>Status</label>
+            <span class="status-badge status-{{ record.status }}">{{ record.status|capitalize }}</span>
+          </div>
+        </div>
+        
+        {% if record.notes %}
+        <div class="notes-section">
+          <h4>Patient Notes</h4>
+          <div class="notes-content">{{ record.notes }}</div>
+        </div>
+        {% endif %}
+        
+        {% if record.follow_up_date %}
+        <div class="followup-section">
+          <h4><i class="fas fa-calendar-check"></i> Follow-up Date</h4>
+          <p>{{ record.follow_up_date.strftime('%Y-%m-%d') }}</p>
+        </div>
+        {% endif %}
+        
+        {% if record.doctor_notes %}
+        <div class="doctor-notes-section">
+          <h4><i class="fas fa-stethoscope"></i> Doctor Notes</h4>
+          <div class="doctor-notes-content">{{ record.doctor_notes }}</div>
+        </div>
+        {% endif %}
+      </div>
+      
+      <!-- Edit Record Form -->
+      <div class="card edit-card">
+        <h2><i class="fas fa-edit"></i> Update Record</h2>
+        <form id="edit-record-form" class="edit-form">
+          <div class="form-group">
+            <label for="notes">Personal Notes</label>
+            <textarea 
+              id="notes" 
+              name="notes" 
+              placeholder="Add any notes about this analysis..."
+              rows="4"
+            >{{ record.notes or '' }}</textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="follow_up_date">Follow-up Date</label>
+            <input 
+              type="date" 
+              id="follow_up_date" 
+              name="follow_up_date"
+              value="{{ record.follow_up_date.strftime('%Y-%m-%d') if record.follow_up_date else '' }}"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="pending" {% if record.status == 'pending' %}selected{% endif %}>Pending</option>
+              <option value="reviewed" {% if record.status == 'reviewed' %}selected{% endif %}>Reviewed</option>
+              <option value="archived" {% if record.status == 'archived' %}selected{% endif %}>Archived</option>
+            </select>
+          </div>
+          
+          <div id="update-message" class="message" style="display: none;"></div>
+          
+          <div class="button-group">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
+            <a href="/patient-history" class="btn btn-secondary">
+              <i class="fas fa-arrow-left"></i> Back to History
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <footer>
+      <p>&copy; 2023 Skin Lesion Classifier | <a href="https://github.com/" target="_blank">GitHub</a></p>
+    </footer>
+  </div>
+  
+  <script>
+    document.getElementById('edit-record-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const recordId = {{ record.id }};
+      const notes = document.getElementById('notes').value;
+      const followUpDate = document.getElementById('follow_up_date').value;
+      const status = document.getElementById('status').value;
+      const messageDiv = document.getElementById('update-message');
+      
+      try {
+        const response = await fetch(`/api/update-record/${recordId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            notes: notes,
+            follow_up_date: followUpDate,
+            status: status
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          messageDiv.textContent = 'Record updated successfully!';
+          messageDiv.className = 'message success-message';
+          messageDiv.style.display = 'block';
+          setTimeout(() => {
+            messageDiv.style.display = 'none';
+          }, 3000);
+        } else {
+          messageDiv.textContent = data.error || 'Failed to update record.';
+          messageDiv.className = 'message error-message';
+          messageDiv.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        messageDiv.textContent = 'An error occurred. Please try again.';
+        messageDiv.className = 'message error-message';
+        messageDiv.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

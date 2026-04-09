@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient History - Skin Lesion Classifier</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <h1><i class="fas fa-microscope"></i> Patient History</h1>
+        <div class="header-actions">
+          <span class="user-info">Hello, <strong>{{ current_user.first_name or current_user.username }}</strong></span>
+          <a href="/logout" class="btn logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+      </div>
+      <p class="subtitle">Your skin lesion analysis records</p>
+    </header>
+    
+    <nav class="breadcrumb">
+      <a href="/"><i class="fas fa-home"></i> Home</a>
+      <span class="separator">/</span>
+      <span>Patient History</span>
+    </nav>
+    
+    <div class="card history-card">
+      <div class="history-header">
+        <h2><i class="fas fa-history"></i> Analysis Records</h2>
+        <a href="/" class="btn new-analysis-btn"><i class="fas fa-plus"></i> New Analysis</a>
+      </div>
+      
+      {% if records.items %}
+        <div class="table-responsive">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th><i class="fas fa-calendar"></i> Date</th>
+                <th><i class="fas fa-diagnoses"></i> Diagnosis</th>
+                <th><i class="fas fa-chart-line"></i> Confidence</th>
+                <th><i class="fas fa-map-marker-alt"></i> Body Part</th>
+                <th><i class="fas fa-info-circle"></i> Status</th>
+                <th><i class="fas fa-calendar-check"></i> Follow-up</th>
+                <th><i class="fas fa-actions"></i> Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for record in records.items %}
+              <tr class="record-row">
+                <td class="date-cell">
+                  {{ record.created_at.strftime('%Y-%m-%d %H:%M') }}
+                </td>
+                <td class="diagnosis-cell">
+                  <span class="diagnosis-tag">{{ record.top_prediction }}</span>
+                  {% if disease_info[record.top_prediction] %}
+                    <small class="diagnosis-name">{{ disease_info[record.top_prediction]['name'] }}</small>
+                  {% endif %}
+                </td>
+                <td class="confidence-cell">
+                  <div class="confidence-bar">
+                    <div class="confidence-fill" style="width: {{ record.confidence * 100 }}%;"></div>
+                    <span class="confidence-text">{{ (record.confidence * 100)|round(1) }}%</span>
+                  </div>
+                </td>
+                <td class="body-part-cell">
+                  {% if record.body_parts %}
+                    {{ record.body_parts }}
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+                <td class="status-cell">
+                  <span class="status-badge status-{{ record.status }}">
+                    {{ record.status|capitalize }}
+                  </span>
+                </td>
+                <td class="followup-cell">
+                  {% if record.follow_up_date %}
+                    {{ record.follow_up_date.strftime('%Y-%m-%d') }}
+                  {% else %}
+                    <span class="text-muted">Not set</span>
+                  {% endif %}
+                </td>
+                <td class="actions-cell">
+                  <a href="/patient-history/{{ record.id }}" class="btn btn-small btn-info" title="View Details">
+                    <i class="fas fa-eye"></i> View
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if records.pages > 1 %}
+        <div class="pagination">
+          {% if records.has_prev %}
+            <a href="?page=1" class="btn pagination-btn"><i class="fas fa-chevron-left"></i> First</a>
+            <a href="?page={{ records.prev_num }}" class="btn pagination-btn">Previous</a>
+          {% endif %}
+          
+          <span class="pagination-info">Page {{ records.page }} of {{ records.pages }}</span>
+          
+          {% if records.has_next %}
+            <a href="?page={{ records.next_num }}" class="btn pagination-btn">Next</a>
+            <a href="?page={{ records.pages }}" class="btn pagination-btn">Last <i class="fas fa-chevron-right"></i></a>
+          {% endif %}
+        </div>
+        {% endif %}
+      {% else %}
+        <div class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <h3>No analysis records yet</h3>
+          <p>Start by uploading your first skin lesion image for analysis.</p>
+          <a href="/" class="btn"><i class="fas fa-upload"></i> Upload Image</a>
+        </div>
+      {% endif %}
+    </div>
+    
+    <div class="card stats-card">
+      <h3><i class="fas fa-chart-bar"></i> Statistics</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-number">{{ records.total }}</div>
+          <div class="stat-label">Total Analyses</div>
+        </div>
+        <div class="stat-item">
+          {% set pending = records.items|selectattr('status', 'equalto', 'pending')|list|length %}
+          <div class="stat-number">{{ pending }}</div>
+          <div class="stat-label">Pending Review</div>
+        </div>
+        <div class="stat-item">
+          {% set reviewed = records.items|selectattr('status', 'equalto', 'reviewed')|list|length %}
+          <div class="stat-number">{{ reviewed }}</div>
+          <div class="stat-label">Reviewed</div>
+        </div>
+      </div>
+    </div>
+    
+    <footer>
+      <p>&copy; 2023 Skin Lesion Classifier | <a href="https://github.com/" target="_blank">GitHub</a></p>
+    </footer>
+  </div>
+  
+  <script>
+    // You can add interactive features here (sorting, filtering, etc.)
+    // For now, the sortable table is rendered server-side
+  </script>
+</body>
+</html>

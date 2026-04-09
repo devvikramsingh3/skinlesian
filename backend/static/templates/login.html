@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Skin Lesion Classifier</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <header class="auth-header">
+        <h1><i class="fas fa-microscope"></i> Skin Lesion Classifier</h1>
+        <p>Login to your account</p>
+      </header>
+      
+      <form id="login-form" method="post" class="auth-form">
+        <div class="form-group">
+          <label for="username">
+            <i class="fas fa-user"></i> Username
+          </label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            placeholder="Enter your username"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="password">
+            <i class="fas fa-lock"></i> Password
+          </label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            placeholder="Enter your password"
+            required
+          >
+        </div>
+        
+        <div class="form-group checkbox">
+          <input type="checkbox" id="remember" name="remember">
+          <label for="remember">Remember me</label>
+        </div>
+        
+        <div id="error-message" class="error-message" style="display: none;"></div>
+        
+        <button type="submit" class="btn auth-btn">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+      </form>
+      
+      <div class="auth-footer">
+        <p>Don't have an account? <a href="/register">Register here</a></p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const remember = document.getElementById('remember').checked;
+      const errorMessage = document.getElementById('error-message');
+      
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: username,
+            password: password,
+            remember: remember
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          window.location.href = '/';
+        } else {
+          errorMessage.textContent = data.error || 'Login failed. Please try again.';
+          errorMessage.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        errorMessage.textContent = 'An error occurred. Please try again.';
+        errorMessage.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
