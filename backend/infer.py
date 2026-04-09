@@ -1,8 +1,6 @@
 import numpy as np
 import json
 import os
-import cv2
-import random
 
 try:
     import tensorflow as tf
@@ -64,8 +62,11 @@ class SkinModel:
             # Mock GradCAM - generate a random heatmap
             heatmap = np.random.rand(28, 28)  # Smaller size for efficiency
             heatmap = np.maximum(heatmap, 0) / (np.max(heatmap) + 1e-8)
-            heatmap = cv2.resize(heatmap, self.target_size)
-            return heatmap
+            # Resize using simple interpolation
+            from PIL import Image
+            heatmap_img = Image.fromarray(np.uint8(255 * heatmap))
+            heatmap_img = heatmap_img.resize(self.target_size, Image.Resampling.LANCZOS)
+            return np.array(heatmap_img) / 255.0
             
         try:
             # Get the last convolutional layer
@@ -80,8 +81,10 @@ class SkinModel:
                 print("No convolutional layer found for GradCAM, using mock heatmap")
                 heatmap = np.random.rand(28, 28)
                 heatmap = np.maximum(heatmap, 0) / (np.max(heatmap) + 1e-8)
-                heatmap = cv2.resize(heatmap, self.target_size)
-                return heatmap
+                from PIL import Image
+                heatmap_img = Image.fromarray(np.uint8(255 * heatmap))
+                heatmap_img = heatmap_img.resize(self.target_size, Image.Resampling.LANCZOS)
+                return np.array(heatmap_img) / 255.0
                 
             # Create a model that outputs both the predictions and the activations of the last conv layer
             grad_model = tf.keras.models.Model(
@@ -109,9 +112,11 @@ class SkinModel:
             heatmap = tf.maximum(heatmap, 0) / (tf.reduce_max(heatmap) + tf.keras.backend.epsilon())
             heatmap = heatmap.numpy()
             
-            # Resize to the original image size
-            heatmap = cv2.resize(heatmap, self.target_size)
-            return heatmap
+            # Resize using PIL
+            from PIL import Image
+            heatmap_img = Image.fromarray(np.uint8(255 * heatmap))
+            heatmap_img = heatmap_img.resize(self.target_size, Image.Resampling.LANCZOS)
+            return np.array(heatmap_img) / 255.0
             
         except Exception as e:
             print(f"Error generating GradCAM: {e}")
@@ -119,5 +124,7 @@ class SkinModel:
             # Fall back to mock heatmap
             heatmap = np.random.rand(28, 28)
             heatmap = np.maximum(heatmap, 0) / (np.max(heatmap) + 1e-8)
-            heatmap = cv2.resize(heatmap, self.target_size)
-            return heatmap
+            from PIL import Image
+            heatmap_img = Image.fromarray(np.uint8(255 * heatmap))
+            heatmap_img = heatmap_img.resize(self.target_size, Image.Resampling.LANCZOS)
+            return np.array(heatmap_img) / 255.0
