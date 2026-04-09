@@ -47,7 +47,12 @@ login_manager.login_view = 'login'
 login_manager.login_message = 'Please log in to access this page.'
 
 # Load model
-model = SkinModel(MODEL_PATH, LABELS_PATH)
+try:
+    model = SkinModel(MODEL_PATH, LABELS_PATH)
+    print("Model loaded successfully")
+except Exception as e:
+    print(f"Model loading error: {e}")
+    model = None
 
 # User loader for Flask-Login
 @login_manager.user_loader
@@ -56,7 +61,12 @@ def load_user(user_id):
 
 # Create database tables
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+        print("Database tables created successfully")
+    except Exception as e:
+        print(f"Database initialization warning: {e}")
+        # Continue anyway - tables might already exist
 
 # Disease information database
 DISEASE_INFO = {
