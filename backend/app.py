@@ -17,6 +17,14 @@ from models import db, User, PatientRecord
 # Get the directory where this file is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# For Vercel deployment, adjust paths if running from root
+if os.path.basename(BASE_DIR) == 'backend':
+    # Running from backend directory (local development)
+    pass
+else:
+    # Running from root directory (Vercel deployment)
+    BASE_DIR = os.path.join(BASE_DIR, 'backend')
+
 MODEL_PATH = os.environ.get("MODEL_PATH", os.path.join(BASE_DIR, "saved_model/model.keras"))
 LABELS_PATH = os.environ.get("LABELS_PATH", os.path.join(BASE_DIR, "labels.json"))
 
